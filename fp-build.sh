@@ -1,5 +1,6 @@
-#!/usr/bin/env sh
+#!/bin/bash
 #
+# Copyright © 2024 Dušan Simić <dusan.simic1810@gmail.com>
 # Copyright © 2021 Lionir
 #
 # This program is free software; you can redistribute it and/or
@@ -16,15 +17,79 @@
 # License along with this library. If not, see <https://www.gnu.org/licenses/>.
 #
 
-if ! [ -f "$1" ]
+_help_print() {
+    echo "usage: $(basename "$0") [options] <manifest file>"
+    echo ""
+    echo "  -X <dir>, --xdg-cache <dir>  xdg cache directory (default: ~/.cache)"
+    echo "  -fc <command>, --flatpak-command <command>  command to execute flatpak builder default: flatpak run org.flatpak.Builder)"
+    echo ""
+    echo "  -S, --system  run flatpak builder in system mode"
+    echo "  -U, --user    run flatpak builder in user mode"
+    echo "  -h, --help    show this page"
+}
+
+if [ "$#" -lt 1 ]
 then
-    echo "$1 doesn't exist" >&2
-    exit
+	echo "incorret use!"
+	_help_print
+	exit 1
 fi
 
-XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+if [ "$1" = "-S" -o "$1" = "--system" ]
+then
+	BUILDER_MODE="--system"
+	shift
+fi
 
-if ! flatpak-builder \
+if [ "$1" = "-U" -o "$1" = "--user" ]
+then
+	BUILDER_MODE="--user"
+	shift
+fi
+
+XDG_CACHE_HOME="$HOME/.cache"
+if [ "$1" = "-X" -o "$1" = "--xdg-cache" ]
+then
+    shift
+    if [ -z "$1" ]
+    then
+        echo "xdg cache directory is not specified!"
+        _help_print
+        exit 1
+    fi
+    XDG_CACHE_HOME="$1"
+    shift
+fi
+
+FLATPAK_BUILDER="flatpak run org.flatpak.Builder"
+if [ "$1" = "-fc" -o "$1" = "--flatpak-command" ]
+then
+    shift
+    if [ -z "$1" ]
+    then
+        echo "flatpak builder command not specified!"
+	_help_print
+	exit 1
+    fi
+    FLATPAK_BUILDER="$1"
+    shift
+fi
+
+if [ "$1" = "-h" -o "$1" = "--help" ]
+then
+    _help_print
+    exit 0
+fi
+
+if [ ! -e "$1" ]
+then
+    echo "manifest doesn't exist!"
+    exit 1
+fi
+
+
+if ! $FLATPAK_BUILDER \
+    $BUILDER_MODE \
     --download-only --no-shallow-clone \
     --force-clean --allow-missing-runtimes \
     --ccache \
@@ -35,8 +100,9 @@ then
     exit 1
 fi
 
-if ! flatpak-builder \
-    --verbose --sandbox --user \
+if ! $FLATPAK_BUILDER \
+    $BUILDER_MODE \
+    --verbose --sandbox \
     --bundle-sources --force-clean --ccache \
     --install-deps-from=flathub \
     --default-branch=localtest \
@@ -48,8 +114,9 @@ then
     exit 1
 fi
 
-if ! flatpak-builder \
-    --user --install --force-clean \
+if ! $FLATPAK_BUILDER \
+    $BUILDER_MODE \
+    --install --force-clean \
     --repo="$XDG_CACHE_HOME/flatpak-builder-repo/" \
     --default-branch=localtest \
     --state-dir="$XDG_CACHE_HOME/flatpak-builder" \
@@ -91,4 +158,3 @@ else
     flatpak run org.freedesktop.appstream-glib validate "$XDG_CACHE_HOME/flatpak-builder-builddir/${1%.*}/files/share/appdata/${1%.*}.appdata.xml"
     echo "---"
 fi
-
