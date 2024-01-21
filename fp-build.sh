@@ -35,58 +35,53 @@ then
 	exit 1
 fi
 
-if [ "$1" = "-S" -o "$1" = "--system" ]
-then
-	BUILDER_MODE="--system"
-	shift
-fi
-
-if [ "$1" = "-U" -o "$1" = "--user" ]
-then
-	BUILDER_MODE="--user"
-	shift
-fi
-
 XDG_CACHE_HOME="$HOME/.cache"
-if [ "$1" = "-X" -o "$1" = "--xdg-cache" ]
-then
-    shift
-    if [ -z "$1" ]
+FLATPAK_BUILDER="flatpak run org.flatpak.Builder"
+
+while [ "$#" -gt 1 ]
+do
+    if [ "$1" = "-S" -o "$1" = "--system" ]
     then
-        echo "xdg cache directory is not specified!"
+        BUILDER_MODE="--system"
+        shift
+    elif [ "$1" = "-U" -o "$1" = "--user" ]
+    then
+        BUILDER_MODE="--user"
+        shift
+    elif [ "$1" = "-X" -o "$1" = "--xdg-cache" ]
+    then
+        shift
+        if [ -z "$1" ]
+        then
+            echo "xdg cache directory is not specified!"
+            _help_print
+            exit 1
+        fi
+        XDG_CACHE_HOME="$1"
+        shift
+    elif [ "$1" = "-fc" -o "$1" = "--flatpak-command" ]
+    then
+        shift
+        if [ -z "$1" ]
+        then
+            echo "flatpak builder command not specified!"
         _help_print
         exit 1
-    fi
-    XDG_CACHE_HOME="$1"
-    shift
-fi
-
-FLATPAK_BUILDER="flatpak run org.flatpak.Builder"
-if [ "$1" = "-fc" -o "$1" = "--flatpak-command" ]
-then
-    shift
-    if [ -z "$1" ]
+        fi
+        FLATPAK_BUILDER="$1"
+        shift
+    elif [ "$1" = "-h" -o "$1" = "--help" ]
     then
-        echo "flatpak builder command not specified!"
-	_help_print
-	exit 1
+        _help_print
+        exit 0
     fi
-    FLATPAK_BUILDER="$1"
-    shift
-fi
-
-if [ "$1" = "-h" -o "$1" = "--help" ]
-then
-    _help_print
-    exit 0
-fi
+done
 
 if [ ! -e "$1" ]
 then
     echo "manifest doesn't exist!"
     exit 1
 fi
-
 
 if ! $FLATPAK_BUILDER \
     $BUILDER_MODE \
