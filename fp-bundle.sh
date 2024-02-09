@@ -37,7 +37,7 @@ then
 	exit 1
 fi
 
-while [ "$#" -gt 1 ]
+while [ "$#" -gt 2 ]
 do
   if [ "$1" = "-S" -o "$1" = "--system" ]
   then
