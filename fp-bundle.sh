@@ -18,12 +18,14 @@
 
 RUNTIME_REPO="https://flathub.org/repo/flathub.flatpakrepo"
 BUNDLE_ARCH="x86_64"
+XDG_CACHE_HOME="$HOME/.cache"
 
 _help_print() {
     echo "usage: $(basename "$0") [options] <manifest file> <branch>"
     echo ""
     echo "  -R <repo>, --runtime-repo <repo>   flatpakrepo file of runtime packages (default: $RUNTIME_REPO)"
     echo "  -A <arch>, --arch <arch>           architecture of the bundle (default: $BUNDLE_ARCH)"
+    echo "  -X <dir>, --xdg-cache <dir>  xdg cache directory (default: $XDG_CACHE_HOME)"
     echo ""
     echo "  -S, --system  run flatpak builder in system mode"
     echo "  -U, --user    run flatpak builder in user mode"
@@ -69,6 +71,17 @@ do
     fi
     BUNDLE_ARCH="$1"
     shift
+  elif [ "$1" = "-X" -o "$1" = "--xdg-cache" ]
+    then
+      shift
+      if [ -z "$1" ]
+      then
+        echo "xdg cache directory is not specified!"
+        _help_print
+        exit 1
+      fi
+      XDG_CACHE_HOME="$1"
+      shift
   elif [ "$1" = "-h" -o "$1" = "--help" ]
   then
     _help_print
@@ -99,7 +112,7 @@ FLATPAK_ID="$(yq -r '.app-id' $MANIFEST)"
 if ! flatpak \
   $BUILDER_MODE \
   build-bundle \
-  repo \
+  "$XDG_CACHE_HOME/flatpak-builder-repo/" \
   "$FLATPAK_ID.flatpak" \
   --runtime-repo=$RUNTIME_REPO \
   --arch=$BUNDLE_ARCH \
