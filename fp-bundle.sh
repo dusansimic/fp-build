@@ -107,7 +107,7 @@ fi
 BRANCH="$1"
 shift
 
-FLATPAK_ID="$(yq -r '.app-id' $MANIFEST)"
+FLATPAK_ID="$(yq -r '."app-id"' $MANIFEST)"
 
 if ! flatpak \
   $BUILDER_MODE \
