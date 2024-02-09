@@ -109,6 +109,7 @@ shift
 
 FLATPAK_ID="$(yq -r '."app-id"' $MANIFEST)"
 
+echo "Bundling..."
 if ! flatpak \
   $BUILDER_MODE \
   build-bundle \
@@ -118,6 +119,6 @@ if ! flatpak \
   --arch=$BUNDLE_ARCH \
   "$FLATPAK_ID" "$BRANCH"
 then
-  echo "Build failed!" >&2
+  echo "Bundle failed!" >&2
   exit 1
 fi
